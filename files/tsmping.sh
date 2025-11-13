@@ -1,0 +1,32 @@
+#!/bin/sh /etc/rc.common
+
+START=40
+STOP=83
+USE_PROCD=1
+
+SERVICE=/usr/sbin/tsmping
+SERVICE_USE_PID=1
+
+  . /lib/functions.sh
+INCLUDE_ONLY=1 . $SERVICE
+
+start_service() {
+    procd_open_instance 'tsmping'
+
+    procd_set_param respawn 3600 5 0
+    procd_set_param stdout 1
+    procd_set_param command $SERVICE
+    procd_set_param pidfile $SERVICE_PID_FILE
+    procd_close_instance
+
+}
+
+service_triggers()
+{
+    procd_add_reload_trigger "tsmping"
+}
+
+stop_service() {
+    kill -9 `ps | grep '/usr/lib/lua/tsmping/app.lua' | grep -v grep | awk '{print $1}'`
+    rm /var/run/tsmping.pid
+}
