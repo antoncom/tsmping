@@ -1,0 +1,4 @@
+
+config debug 'debug'
+	option enable '0'
+

@@ -1,47 +1,32 @@
-#!/bin/sh
+#!/bin/sh /etc/rc.common
 
-INITFILE=/etc/init.d/tsmping
-SERVICE_PID_FILE=/var/run/tsmping.pid
-APP=$0
+START=40
+STOP=83
+USE_PROCD=1
 
-usage() {
-    echo "Usage: $APP [ COMMAND ]"
-    doexit
-}
-callinit() {
-    [ -x $INITFILE ] || {
-        echo "No init file '$INITFILE'"
-        return
-    }
-    exec $INITFILE $1
-    RETVAL=$?
-}
-run() {
-    exec /usr/bin/lua /usr/lib/lua/tsmping/app.lua
-    RETVAL=$?
-}
+SERVICE=/usr/sbin/tsmping
+SERVICE_USE_PID=1
 
-doexit() {
-    exit $RETVAL
+  . /lib/functions.sh
+INCLUDE_ONLY=1 . $SERVICE
+
+start_service() {
+    procd_open_instance 'tsmping'
+
+    procd_set_param respawn 3600 5 0
+    procd_set_param stdout 1
+    procd_set_param command $SERVICE
+    procd_set_param pidfile $SERVICE_PID_FILE
+    procd_close_instance
+
 }
 
-[ -n "$INCLUDE_ONLY" ] && return
-
-CMD="$1"
-[ -z $CMD ] && {
-    run
-    doexit
+service_triggers()
+{
+    procd_add_reload_trigger "tsmping"
 }
-shift
-# See how we were called.
-case "$CMD" in
-    start|stop|restart|reload)
-        callinit $CMD
-        ;;
-    *)
-        RETVAL=1
-        usage $0
-        ;;
-esac
 
-doexit
+stop_service() {
+    kill -9 `ps | grep '/usr/lib/lua/tsmping/app.lua' | grep -v grep | awk '{print $1}'`
+    rm /var/run/tsmping.pid
+}
