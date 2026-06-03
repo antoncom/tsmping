@@ -1,3 +1,5 @@
+-- Модуль реализует поднятие события на шине UBUS
+
 local ubus = require "ubus"
 local util = require "luci.util"
 
